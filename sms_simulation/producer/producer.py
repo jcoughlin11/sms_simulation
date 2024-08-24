@@ -17,7 +17,7 @@ class SmsProducer:
 
         self._maxMsgLen: int = 100
 
-        self._producerProcess = mp.Process(
+        self._producerProcess: mp.Process = mp.Process(
             target=self._produce_sms, args=(self._nMessages, self._msgQueue)
         )
 
@@ -53,3 +53,9 @@ class SmsProducer:
     # -----
     def start(self) -> None:
         self._producerProcess.start()
+
+    # -----
+    # join
+    # -----
+    def join(self) -> None:
+        self._producerProcess.join()
