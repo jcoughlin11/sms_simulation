@@ -1,8 +1,10 @@
+import math
 import multiprocessing as mp
 import random
 import time
 from typing import Dict
 
+from sms_simulation.constants import SEND_SIGMA
 from sms_simulation.constants import SENTINEL
 
 
@@ -39,7 +41,9 @@ class SmsSender:
             if sms == SENTINEL:
                 break
 
-            sendTime: float = random.normalvariate(mu=self._timeToSend)
+            sendTime: float = math.fabs(
+                random.normalvariate(mu=self._timeToSend, sigma=SEND_SIGMA)
+            )
             time.sleep(sendTime)
             sendSuccessful: bool = random.uniform(0.0, 1.0) > self._sendFailureRate
             response: Dict[str, float | bool] = {

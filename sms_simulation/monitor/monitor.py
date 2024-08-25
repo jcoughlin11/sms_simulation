@@ -86,11 +86,16 @@ class SmsMonitor:
     # display
     # -----
     def display(self) -> None:
+        avgTime: float | str = "N/A"
+
+        if self._state["messagesSent"] > 0:
+            avgTime = round(
+                self._state["avgTimeToSend"] / self._state["messagesSent"], 2
+            )
+
         print(
             "Number of messages sent: "
-            f"{self._state['messagesSent']} / {self._nMessages}\n"
-            f"Number of messages failed: {self._state['failedSends']}\n"
-            "Average time per message: "
-            f"{self._state['avgTimeToSend'] / self._state['messagesSent']}s",
-            end="\r",
+            f"{int(self._state['messagesSent'])} / {self._nMessages}\n"
+            f"Number of messages failed: {int(self._state['failedSends'])}\n"
+            f"Average time per message: {avgTime}"
         )
