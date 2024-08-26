@@ -1,6 +1,8 @@
 import argparse
 from typing import List
 
+from sms_simulation.constants import SEND_SIGMA
+
 
 # ============================================
 #                 parse_args
@@ -37,12 +39,12 @@ def parse_args() -> argparse.Namespace:
         dest="timeToSend",
         help="Each sender process takes a certain amount of time to physically send "
         "the message. That time is drawn from a normal distribution with standard "
-        "deviation = 1 and mean given by the value of this option (in seconds). This "
-        "option can be specified multiple times, once for each sender instance. If "
-        "fewer values of this option are given than there are senders, the default "
-        "value will be used for the remaining senders. If more values of this option "
-        "are specified than there are senders, only the first nSenders values will be "
-        "used.",
+        f"deviation = {SEND_SIGMA} and mean given by the value of this option "
+        "(in seconds). This option can be specified multiple times, once for each "
+        "sender instance. If fewer values of this option are given than there are "
+        "senders, the default value will be used for the remaining senders. If more "
+        "values of this option are specified than there are senders, only the first "
+        "nSenders values will be used.",
         nargs="*",
     )
 
