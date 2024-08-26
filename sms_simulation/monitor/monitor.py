@@ -68,6 +68,7 @@ class SmsMonitor:
 
             if (currentTime - startTime) >= self._progUpdateTime:
                 self.display()
+                self._move_cursor_up(3)
                 startTime = currentTime
 
         self._smsProducer.join()
@@ -99,3 +100,10 @@ class SmsMonitor:
             f"Number of messages failed: {int(self._state['failedSends'])}\n"
             f"Average time per message: {avgTime}"
         )
+
+    # -----
+    # _move_cursor_up
+    # -----
+    def _move_cursor_up(self, nLines: int) -> None:
+        for _ in range(nLines):
+            print("\033[F", end="")
