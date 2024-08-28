@@ -101,9 +101,9 @@ def parse_args() -> argparse.Namespace:
                 print("\t* (showing only first five)")
                 break
             info: str = ""
-            if args.__getattribute__(attr)[i] == parser.get_default(attr):
+            if getattr(args, attr)[i] == parser.get_default(attr):
                 info = "(default value)"
-            print(f"\t* {args.__getattribute__(attr)[i]} {info}")
+            print(f"\t* {getattr(args, attr)[i]} {info}")
 
     print(f"\nUpdating progress every: {args.progUpdateTime:.2f}s\n")
 
