@@ -14,6 +14,16 @@ from sms_simulation.sender.sender import SmsSender
 #                 SmsMonitor
 # ============================================
 class SmsMonitor:
+    """
+    Oversees the sms producer and sender processes as well as displays
+    progress information to the user via stdout.
+
+    Parameters
+    ----------
+    args : argparse.Namespace
+        The parsed command-line arguments passed to the tool.
+    """
+
     # -----
     # constructor
     # -----
@@ -21,6 +31,8 @@ class SmsMonitor:
         self._nMessages: int = args.nMessages
         self._progUpdateTime: float = args.progUpdateTime
 
+        # The size of the queue is enough to hold every message and
+        # sentinel value (one for each sender)
         self._msgQueue: mp.Queue = mp.Queue(maxsize=self._nMessages + args.nSenders)
         self._responseQueue: mp.Queue = mp.Queue(
             maxsize=self._nMessages + args.nSenders
@@ -47,6 +59,16 @@ class SmsMonitor:
     # run
     # -----
     def run(self) -> int:
+        """
+        Main loop.
+
+        Starts the producer and sender processes and then keeps tabs on the progress.
+
+        Returns
+        -------
+        int
+            0 on success
+        """
         startTime = time.time()
 
         self._smsProducer.start()
@@ -87,6 +109,10 @@ class SmsMonitor:
     # display
     # -----
     def display(self) -> None:
+        """
+        Displays progress to stdout.
+        """
+        # Avoid division by zero errors
         avgTime: float | str = "N/A"
 
         if self._state["messagesSent"] > 0:
@@ -105,5 +131,14 @@ class SmsMonitor:
     # _move_cursor_up
     # -----
     def _move_cursor_up(self, nLines: int) -> None:
+        """
+        Keeps the updated display "in-place" by using the ascii code
+        to move the cursor up the desired number of lines.
+
+        Parameters
+        ----------
+        nLines : int
+            The number of lines by which to move up the cursor.
+        """
         for _ in range(nLines):
             print("\033[F", end="")

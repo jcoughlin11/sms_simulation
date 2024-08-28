@@ -9,6 +9,9 @@ from sms_simulation.constants import SEND_SIGMA
 #                 parse_args
 # ============================================
 def parse_args() -> argparse.Namespace:
+    """
+    Defines, reads-in, and error checks the command-line arguments.
+    """
     parser = argparse.ArgumentParser(
         prog="sms_simulation",
         description="Simulates sending out a large number of sms messages.",
@@ -111,6 +114,25 @@ def parse_args() -> argparse.Namespace:
 #                _positive_int
 # ============================================
 def _positive_int(strValue: str) -> int:
+    """
+    Ensures that the given value can be converted to an integer and
+    is > 0. Used by ArgumentParser.
+
+    Parameters
+    ----------
+    strValue : str
+        The value of the option/argument passed on the command-line.
+
+    Returns
+    -------
+    value : int
+        The verified, integer value of the given strValue.
+
+    Raises
+    ------
+    argparse.ArgumentTypeError
+        If the given value cannot be converted to an integer or is <= 0.
+    """
     value: int = int(strValue)
 
     if value <= 0:
@@ -123,6 +145,25 @@ def _positive_int(strValue: str) -> int:
 #                _time_float
 # ============================================
 def _time_float(strValue: str) -> float:
+    """
+    Ensures that the given value can be converted to a float and
+    is > 0. Used by ArgumentParser.
+
+    Parameters
+    ----------
+    strValue : str
+        The value of the option/argument passed on the command-line.
+
+    Returns
+    -------
+    value : float
+        The verified, float value of the given strValue.
+
+    Raises
+    ------
+    argparse.ArgumentTypeError
+        If the given value cannot be converted to a float or is <= 0.
+    """
     value: float = float(strValue)
 
     if value <= 0.0:
@@ -135,6 +176,25 @@ def _time_float(strValue: str) -> float:
 #               _failure_float
 # ============================================
 def _failure_float(strValue: str) -> float:
+    """
+    Ensures that the given value can be converted to a float and
+    is (0, 1). Used by ArgumentParser.
+
+    Parameters
+    ----------
+    strValue : str
+        The value of the option/argument passed on the command-line.
+
+    Returns
+    -------
+    value : float
+        The verified, float value of the given strValue.
+
+    Raises
+    ------
+    argparse.ArgumentTypeError
+        If the given value cannot be converted to a float or is not in the valid range.
+    """
     value: float = float(strValue)
 
     if value < 0.0 or value > 1.0:
@@ -147,12 +207,42 @@ def _failure_float(strValue: str) -> float:
 #               _squeeze_list
 # ============================================
 def _squeeze_list(src: List[float] | float, length: int, fillVal: float) -> List[float]:
+    """
+    Ensures that the given list is equal to the desired length.
+
+    The mean send times and failure rates can be given for only some of the worker
+    processes. If there aren't enough values given, we pad the list with the default
+    value. If too many are given, we keep only the first length values that were
+    given.
+
+    Parameters
+    ----------
+    src : List[float]
+        The list to be squeezed.
+
+    length : int
+        The desired length of the list.
+
+    fillVal : float
+        The value to use in the case that not enough values were given on the
+        command line.
+
+    Returns
+    -------
+    squeezedList : List[float]
+        The adjusted version of src that is the correct length.
+    """
     squeezedList: List[float] = []
 
+    # Just the default value is given. Means nothing was passed on the command line
     if isinstance(src, float):
         squeezedList = [fillVal] * length
+
+    # Not enough values given on the command line
     elif isinstance(src, List) and len(src) <= length:
         squeezedList = src + [fillVal] * (length - len(src))
+
+    # Too many values given on the command line
     elif isinstance(src, List) and len(src) > length:
         squeezedList = src[:length]
     else:
