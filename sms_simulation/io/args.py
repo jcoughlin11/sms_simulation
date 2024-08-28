@@ -1,4 +1,5 @@
 import argparse
+from typing import Dict
 from typing import List
 
 from sms_simulation.constants import SEND_SIGMA
@@ -82,6 +83,27 @@ def parse_args() -> argparse.Namespace:
         args.sendFailureRate, args.nSenders, parser.get_default("sendFailureRate")
     )
 
+    print(f"\nSending: {args.nMessages} messages")
+    print(f"Using: {args.nSenders} senders")
+
+    messages: Dict[str, str] = {
+        "Average time to send (s) for each sender:": "timeToSend",
+        "Failure rate for each sender:": "sendFailureRate",
+    }
+
+    for msg, attr in messages.items():
+        print(f"\n{msg}")
+        for i in range(args.nSenders):
+            if i == 5:
+                print("\t* (showing only first five)")
+                break
+            info: str = ""
+            if args.__getattribute__(attr)[i] == parser.get_default(attr):
+                info = "(default value)"
+            print(f"\t* {args.__getattribute__(attr)[i]} {info}")
+
+    print(f"\nUpdating progress every: {args.progUpdateTime:.2f}s\n")
+
     return args
 
 
@@ -92,7 +114,7 @@ def _positive_int(strValue: str) -> int:
     value: int = int(strValue)
 
     if value <= 0:
-        raise argparse.ArgumentTypeError("Value must be >= 0")
+        raise argparse.ArgumentTypeError("Value must be > 0")
 
     return value
 
@@ -104,7 +126,7 @@ def _time_float(strValue: str) -> float:
     value: float = float(strValue)
 
     if value <= 0.0:
-        raise argparse.ArgumentTypeError("Value must be >= 0")
+        raise argparse.ArgumentTypeError("Value must be > 0")
 
     return value
 
