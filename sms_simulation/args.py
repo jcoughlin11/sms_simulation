@@ -13,6 +13,38 @@ def parse_args() -> argparse.Namespace:
     """
     Defines, reads-in, and error checks the command-line arguments.
     """
+    parser: argparse.ArgumentParser = _get_parser()
+    args: argparse.Namespace = _parse(parser)
+    args = _validate_args(args, parser)
+
+    print(f"\nSending: {args.nMessages} messages")
+    print(f"Using: {args.nSenders} senders")
+
+    messages: Dict[str, str] = {
+        "Average time to send (s) for each sender:": "timeToSend",
+        "Failure rate for each sender:": "sendFailureRate",
+    }
+
+    for msg, attr in messages.items():
+        print(f"\n{msg}")
+        for i in range(args.nSenders):
+            if i == 5:
+                print("\t* (showing only first five)")
+                break
+            info: str = ""
+            if getattr(args, attr)[i] == parser.get_default(attr):
+                info = "(default value)"
+            print(f"\t* {getattr(args, attr)[i]} {info}")
+
+    print(f"\nUpdating progress every: {args.progUpdateTime:.2f}s\n")
+
+    return args
+
+
+# ============================================
+#               _get_parser
+# ============================================
+def _get_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="sms_simulation",
         description="Simulates sending out a large number of sms messages.",
@@ -77,8 +109,22 @@ def parse_args() -> argparse.Namespace:
         help="The time, in seconds, between progress refreshes.",
     )
 
-    args = parser.parse_args()
+    return parser
 
+
+# ============================================
+#                   _parse
+# ============================================
+def _parse(parser: argparse.ArgumentParser) -> argparse.Namespace:
+    return parser.parse_args()
+
+
+# ============================================
+#               _validate_args
+# ============================================
+def _validate_args(
+    args: argparse.Namespace, parser: argparse.ArgumentParser
+) -> argparse.Namespace:
     args.timeToSend = _squeeze_list(
         args.timeToSend, args.nSenders, parser.get_default("timeToSend")
     )
@@ -86,27 +132,6 @@ def parse_args() -> argparse.Namespace:
     args.sendFailureRate = _squeeze_list(
         args.sendFailureRate, args.nSenders, parser.get_default("sendFailureRate")
     )
-
-    print(f"\nSending: {args.nMessages} messages")
-    print(f"Using: {args.nSenders} senders")
-
-    messages: Dict[str, str] = {
-        "Average time to send (s) for each sender:": "timeToSend",
-        "Failure rate for each sender:": "sendFailureRate",
-    }
-
-    for msg, attr in messages.items():
-        print(f"\n{msg}")
-        for i in range(args.nSenders):
-            if i == 5:
-                print("\t* (showing only first five)")
-                break
-            info: str = ""
-            if getattr(args, attr)[i] == parser.get_default(attr):
-                info = "(default value)"
-            print(f"\t* {getattr(args, attr)[i]} {info}")
-
-    print(f"\nUpdating progress every: {args.progUpdateTime:.2f}s\n")
 
     return args
 
