@@ -1,4 +1,5 @@
 import argparse
+import multiprocessing as mp
 
 from sms_simulation.constants import TIMEOUT_BUFFER
 from sms_simulation.args import parse_args
@@ -20,6 +21,8 @@ def main() -> int:
     int
         0 if success, -1 otherwise.
     """
+    mp.set_start_method("spawn")
+
     args: argparse.Namespace = parse_args()
     monitor: SmsMonitor = SmsMonitor(args)
 
