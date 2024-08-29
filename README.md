@@ -8,11 +8,10 @@ simulating the generation and sending of an arbitrary number of sms messages.
 * Python >= 3.12
 * Ubuntu 24.04
 
-NOTE: The base code only makes use of the Python standard library, so any Python 3.x.x 
-should work, though some of the type annotations may not be available in earlier 
-versions of Python. Additionally, I do not have a Windows or Mac machine to test on, 
-so the code has only been checked on Ubuntu 24.04. Earlier versions of Ubuntu (or 
-really any other linux variant) should work.
+NOTE: Any Python 3.x.x should work, though some of the type annotations may not be 
+available in earlier versions of Python. Additionally, I do not have a Windows or Mac 
+machine to test on, so the code has only been checked on Ubuntu 24.04. Earlier versions 
+of Ubuntu (or really any other linux variant) should work.
 
 ## Installation
 
@@ -83,6 +82,6 @@ mean send time of 3 and 4 seconds respectively, the first sender has a failure r
 sms_simulation -n 100 -s 5 -t 3 4 -f 0.6 -p 0.1
 ```
 
-The third, fourth, and fifth senders would have a mean send time of 1 second 
+The third, fourth, and fifth senders would have a mean send time of 0.1 second 
 (the default value). The second, third, fourth, and fifth senders would have a failure 
 rate of 0.1 (the default value).
