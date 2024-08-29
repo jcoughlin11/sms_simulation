@@ -85,3 +85,21 @@ sms_simulation -n 100 -s 5 -t 3 4 -f 0.6 -p 0.1
 The third, fourth, and fifth senders would have a mean send time of 0.1 second 
 (the default value). The second, third, fourth, and fifth senders would have a failure 
 rate of 0.1 (the default value).
+
+
+## Testing
+If you want to run the unit tests for this package, the easist way to do that is to 
+install [poetry](https://python-poetry.org/docs/#installing-with-the-official-installer).
+
+From the root of the repository, you can run
+
+```bash
+poetry install --with dev 
+```
+
+to install the development dependencies alongside the package. You should then just
+be able to run 
+
+```bash
+poetry run pytest
+```

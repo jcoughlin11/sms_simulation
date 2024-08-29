@@ -1,4 +1,5 @@
 import argparse
+import math
 from typing import Dict
 from typing import List
 
@@ -166,6 +167,9 @@ def _time_float(strValue: str) -> float:
     """
     value: float = float(strValue)
 
+    if not math.isfinite(value):
+        raise argparse.ArgumentTypeError("Value must not be NaN or infinity.")
+
     # It is unphysical that something will take no time or negative time
     if value <= 0.0:
         raise argparse.ArgumentTypeError("Value must be > 0")
@@ -197,6 +201,9 @@ def _failure_float(strValue: str) -> float:
         If the given value cannot be converted to a float or is not in the valid range.
     """
     value: float = float(strValue)
+
+    if not math.isfinite(value):
+        raise argparse.ArgumentTypeError("Value must not be NaN or infinity.")
 
     if value < 0.0 or value > 1.0:
         raise argparse.ArgumentTypeError("Value must be > 0 and < 1")
