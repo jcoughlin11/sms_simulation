@@ -2,8 +2,9 @@ import argparse
 import math
 from typing import List
 
-from hypothesis import assume
 from hypothesis import given
+from hypothesis import HealthCheck
+from hypothesis import settings
 import hypothesis.strategies as st
 import pytest
 
@@ -28,6 +29,7 @@ def test_positive_int_numeric_input(s: str) -> None:
 # ============================================
 #       test_positive_int_alpha_input
 # ============================================
+@settings(suppress_health_check=(HealthCheck.filter_too_much,))
 @given(st.text().filter(lambda x: x.isalpha()))
 def test_positive_int_alpha_input(s: str) -> None:
     with pytest.raises(ValueError):
@@ -49,6 +51,7 @@ def test_time_float_numeric_input(s: str) -> None:
 # ============================================
 #        test_time_float_alpha_input
 # ============================================
+@settings(suppress_health_check=(HealthCheck.filter_too_much,))
 @given(st.text().filter(lambda x: x.isalpha()))
 def test_time_float_alpha_input(s: str) -> None:
     with pytest.raises(ValueError):
@@ -70,6 +73,7 @@ def test_failure_float_numeric_input(s: str) -> None:
 # ============================================
 #        test_failure_float_alpha_input
 # ============================================
+@settings(suppress_health_check=(HealthCheck.filter_too_much,))
 @given(st.text().filter(lambda x: x.isalpha()))
 def test_failure_float_alpha_input(s: str) -> None:
     with pytest.raises(ValueError):
