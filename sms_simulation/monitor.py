@@ -93,7 +93,7 @@ class SmsMonitor:
     # _monitor
     # -----
     def _monitor(self, timeout: float) -> int:
-        print(f"Running with timeout: {timeout}s\n")
+        print(f"Running with timeout: {timeout:.2f}s\n")
 
         returnValue: int = 0
         spinner: Spinner = Spinner()
