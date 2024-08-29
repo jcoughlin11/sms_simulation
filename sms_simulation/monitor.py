@@ -5,9 +5,11 @@ import time
 from typing import Dict
 from typing import List
 
+from progress.spinner import Spinner  # type: ignore
+
 from sms_simulation.constants import SENTINEL
-from sms_simulation.producer.producer import SmsProducer
-from sms_simulation.sender.sender import SmsSender
+from sms_simulation.producer import SmsProducer
+from sms_simulation.sender import SmsSender
 
 
 # ============================================
@@ -31,20 +33,21 @@ class SmsMonitor:
         self._nMessages: int = args.nMessages
         self._progUpdateTime: float = args.progUpdateTime
 
-        # The size of the queue is enough to hold every message and
-        # sentinel value (one for each sender)
         self._msgQueue: mp.Queue = mp.Queue(maxsize=self._nMessages + args.nSenders)
         self._responseQueue: mp.Queue = mp.Queue(
             maxsize=self._nMessages + args.nSenders
         )
 
-        self._smsProducer: SmsProducer = SmsProducer(self._nMessages, self._msgQueue)
+        self._smsProducer: SmsProducer = SmsProducer(
+            self._nMessages, self._msgQueue, "producer"
+        )
         self._smsSenders: List[SmsSender] = [
             SmsSender(
                 args.timeToSend[i],
                 args.sendFailureRate[i],
                 self._msgQueue,
                 self._responseQueue,
+                f"sender_{i}",
             )
             for i in range(args.nSenders)
         ]
@@ -52,29 +55,51 @@ class SmsMonitor:
         self._state: Dict[str, float] = {
             "messagesSent": 0.0,
             "failedSends": 0.0,
-            "avgTimeToSend": 0.0,
+            "totalSendTime": 0.0,
         }
 
     # -----
     # run
     # -----
-    def run(self) -> int:
+    def run(self, timeout: float) -> int:
         """
         Main loop.
 
-        Starts the producer and sender processes and then keeps tabs on the progress.
+        Starts the producer and sender processes and then keeps tabs on
+        the progress.
 
         Returns
         -------
         int
-            0 on success
+            0 on success, a negative value otherwise.
         """
-        startTime = time.time()
+        self._start_processes()
+        monitorReturnValue: int = self._monitor(timeout)
+        cleanupReturnValue: int = self._cleanup()
+        self._display()
 
+        return monitorReturnValue + cleanupReturnValue
+
+    # -----
+    # _start_processes
+    # -----
+    def _start_processes(self) -> None:
         self._smsProducer.start()
 
         for sender in self._smsSenders:
             sender.start()
+
+    # -----
+    # _monitor
+    # -----
+    def _monitor(self, timeout: float) -> int:
+        print(f"Running with timeout: {timeout}s\n")
+
+        returnValue: int = 0
+        spinner: Spinner = Spinner()
+
+        startTime: float = time.time()
+        prevUpdateTime: float = time.time()
 
         while self._state["messagesSent"] < self._nMessages:
             try:
@@ -84,31 +109,26 @@ class SmsMonitor:
             else:
                 self._state["messagesSent"] += 1.0
                 self._state["failedSends"] += 1 if not response["successful"] else 0
-                self._state["avgTimeToSend"] += response["timeToSend"]
+                self._state["totalSendTime"] += response["timeToSend"]
 
             currentTime: float = time.time()
 
-            if (currentTime - startTime) >= self._progUpdateTime:
-                self.display()
+            if (currentTime - prevUpdateTime) >= self._progUpdateTime:
+                self._display(spinner)
                 self._move_cursor_up(3)
-                startTime = currentTime
+                prevUpdateTime = currentTime
 
-        self._smsProducer.join()
+            if currentTime - startTime > timeout:
+                print("Error: timeout processing messages.")
+                returnValue = -1
+                break
 
-        for _ in range(len(self._smsSenders)):
-            self._msgQueue.put(SENTINEL)
-
-        for sender in self._smsSenders:
-            sender.join()
-
-        self.display()
-
-        return 0
+        return returnValue
 
     # -----
-    # display
+    # _display
     # -----
-    def display(self) -> None:
+    def _display(self, spinner: Spinner | None = None) -> None:
         """
         Displays progress to stdout.
         """
@@ -117,7 +137,7 @@ class SmsMonitor:
 
         if self._state["messagesSent"] > 0:
             avgTime = round(
-                self._state["avgTimeToSend"] / self._state["messagesSent"], 2
+                self._state["totalSendTime"] / self._state["messagesSent"], 2
             )
 
         print(
@@ -126,6 +146,38 @@ class SmsMonitor:
             f"Number of messages failed: {int(self._state['failedSends'])}\n"
             f"Average time per message: {avgTime}"
         )
+        if spinner:
+            spinner.next()
+
+    # -----
+    # _cleanup
+    # -----
+    def _cleanup(self) -> int:
+        returnValue: int = 0
+
+        for _ in range(len(self._smsSenders)):
+            self._msgQueue.put_nowait(SENTINEL)
+
+        for proc in [
+            self._smsProducer,
+        ] + self._smsSenders:
+            proc.join(timeout=1)
+
+            exitCode: int | None = proc.exitcode
+
+            if exitCode is None:
+                print("Error: process {proc.name} did not terminate. Terminating.")
+                proc.terminate()
+                returnValue = -1
+
+            elif exitCode != 0:
+                print(f"Error: process {proc.name} failed with exit code: {exitCode}")
+                returnValue = -1
+
+        self._msgQueue.close()
+        self._responseQueue.close()
+
+        return returnValue
 
     # -----
     # _move_cursor_up

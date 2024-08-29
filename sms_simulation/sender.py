@@ -11,7 +11,7 @@ from sms_simulation.constants import SENTINEL
 # ============================================
 #                  SmsSender
 # ============================================
-class SmsSender:
+class SmsSender(mp.Process):
     """
     Represents a worker process that takes sms messages off of the
     production queue and simulates sending them out.
@@ -44,14 +44,17 @@ class SmsSender:
         sendFailureRate: float,
         msgQueue: mp.Queue,
         responseQueue: mp.Queue,
+        procName: str,
     ) -> None:
         self._timeToSend: float = timeToSend
         self._sendFailureRate: float = sendFailureRate
         self._msgQueue: mp.Queue = msgQueue
         self._responseQueue: mp.Queue = responseQueue
 
-        self._senderProcess: mp.Process = mp.Process(
-            target=self._send_sms, args=(self._msgQueue, self._responseQueue)
+        super().__init__(
+            target=self._send_sms,
+            args=(self._msgQueue, self._responseQueue),
+            name=procName,
         )
 
     # -----
@@ -94,22 +97,4 @@ class SmsSender:
                 "timeToSend": sendTime,
             }
 
-            responseQueue.put(response)
-
-    # -----
-    # start
-    # -----
-    def start(self) -> None:
-        """
-        Wrapper around starting the worker process.
-        """
-        self._senderProcess.start()
-
-    # -----
-    # join
-    # -----
-    def join(self) -> None:
-        """
-        Wrapper around waiting for the worker process to finish.
-        """
-        self._senderProcess.join()
+            responseQueue.put_nowait(response)

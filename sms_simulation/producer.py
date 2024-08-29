@@ -7,7 +7,7 @@ from typing import Dict
 # ============================================
 #                 SmsProducer
 # ============================================
-class SmsProducer:
+class SmsProducer(mp.Process):
     """
     Generates the sms messages to be sent by the sender processes.
 
@@ -24,14 +24,16 @@ class SmsProducer:
     # -----
     # constructor
     # -----
-    def __init__(self, nMessages: int, msgQueue: mp.Queue) -> None:
+    def __init__(self, nMessages: int, msgQueue: mp.Queue, procName: str) -> None:
         self._nMessages: int = nMessages
         self._msgQueue: mp.Queue = msgQueue
 
         self._maxMsgLen: int = 100
 
-        self._producerProcess: mp.Process = mp.Process(
-            target=self._produce_sms, args=(self._nMessages, self._msgQueue)
+        super().__init__(
+            target=self._produce_sms,
+            args=(self._nMessages, self._msgQueue),
+            name=procName,
         )
 
     # -----
@@ -91,22 +93,4 @@ class SmsProducer:
                 self._generate_phone_number(): self._generate_message()
             }
 
-            msgQueue.put(sms)
-
-    # -----
-    # start
-    # -----
-    def start(self) -> None:
-        """
-        Wrapper around starting the producer process.
-        """
-        self._producerProcess.start()
-
-    # -----
-    # join
-    # -----
-    def join(self) -> None:
-        """
-        Wrapper around waiting for the producer process to finish.
-        """
-        self._producerProcess.join()
+            msgQueue.put_nowait(sms)

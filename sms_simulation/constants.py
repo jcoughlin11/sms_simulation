@@ -7,3 +7,6 @@ SENTINEL = None
 # command-line argument (or uses the default value) and whose standard
 # deviation is given by SEND_SIGMA
 SEND_SIGMA: float = 0.1
+
+# Extra time to account for overhead and deviations in the send time
+TIMEOUT_BUFFER = 5 * SEND_SIGMA

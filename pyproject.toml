@@ -9,12 +9,15 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.12"
+progress = "^1.6"
 
 
 [tool.poetry.group.dev.dependencies]
 black = "^24.8.0"
 pylint = "^3.2.6"
 mypy = "^1.11.1"
+pytest = "^8.3.2"
+hypothesis = "^6.111.2"
 
 [build-system]
 requires = ["poetry-core"]
@@ -30,6 +33,8 @@ max-line-length = 88
 disable = [
   "missing-docstring",
   "invalid-name",
+  "too-few-public-methods",
+  "too-many-arguments",
 ]
 
 

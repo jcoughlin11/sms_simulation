@@ -166,6 +166,7 @@ def _time_float(strValue: str) -> float:
     """
     value: float = float(strValue)
 
+    # It is unphysical that something will take no time or negative time
     if value <= 0.0:
         raise argparse.ArgumentTypeError("Value must be > 0")
 
