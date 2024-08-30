@@ -1,6 +1,6 @@
 import argparse
 import multiprocessing as mp
-from queue import Empty
+import queue
 import time
 from typing import Dict
 from typing import List
@@ -33,8 +33,11 @@ class SmsMonitor:
         self._nMessages: int = args.nMessages
         self._progUpdateTime: float = args.progUpdateTime
 
-        self._msgQueue: mp.Queue = mp.Queue(maxsize=self._nMessages + args.nSenders)
-        self._responseQueue: mp.Queue = mp.Queue(
+        self._processManager: mp.managers.SyncManager = mp.Manager()
+        self._msgQueue: queue.Queue = self._processManager.Queue(
+            maxsize=self._nMessages + args.nSenders
+        )
+        self._responseQueue: queue.Queue = self._processManager.Queue(
             maxsize=self._nMessages + args.nSenders
         )
 
@@ -76,8 +79,10 @@ class SmsMonitor:
         self._start_processes()
         monitorReturnValue: int = self._monitor(timeout)
         cleanupReturnValue: int = self._cleanup()
-        self._display()
+        if monitorReturnValue + cleanupReturnValue == 0:
+            self._display()
 
+        print("Done.")
         return monitorReturnValue + cleanupReturnValue
 
     # -----
@@ -104,7 +109,7 @@ class SmsMonitor:
         while self._state["messagesSent"] < self._nMessages:
             try:
                 response: Dict[str, float | bool] = self._responseQueue.get_nowait()
-            except Empty:
+            except queue.Empty:
                 pass
             else:
                 self._state["messagesSent"] += 1.0
@@ -119,6 +124,7 @@ class SmsMonitor:
                 prevUpdateTime = currentTime
 
             if currentTime - startTime > timeout:
+                self._move_cursor_down(4)
                 print("Error: timeout processing messages.")
                 returnValue = -1
                 break
@@ -153,29 +159,38 @@ class SmsMonitor:
     # _cleanup
     # -----
     def _cleanup(self) -> int:
-        returnValue: int = 0
+        returnValue: int = self._stop_process(self._smsProducer)
 
         for _ in range(len(self._smsSenders)):
             self._msgQueue.put_nowait(SENTINEL)
 
-        for proc in [
-            self._smsProducer,
-        ] + self._smsSenders:
+        for proc in self._smsSenders:
+            returnValue += self._stop_process(proc)
+
+        return returnValue
+
+    # -----
+    # _stop_process
+    # -----
+    def _stop_process(self, proc: mp.Process) -> int:
+        returnValue: int = 0
+
+        proc.join(timeout=1)
+
+        exitCode: int | None = proc.exitcode
+
+        if exitCode is None:
+            print(f"Error: process {proc.name} not done: terminating.")
+            proc.terminate()
             proc.join(timeout=1)
+            if proc.exitcode is None:
+                proc.kill()
+                proc.join(timeout=1)
+            returnValue = -1
 
-            exitCode: int | None = proc.exitcode
-
-            if exitCode is None:
-                print("Error: process {proc.name} did not terminate. Terminating.")
-                proc.terminate()
-                returnValue = -1
-
-            elif exitCode != 0:
-                print(f"Error: process {proc.name} failed with exit code: {exitCode}")
-                returnValue = -1
-
-        self._msgQueue.close()
-        self._responseQueue.close()
+        elif exitCode != 0:
+            print(f"Error: process {proc.name} failed with exit code: {exitCode}")
+            returnValue = -1
 
         return returnValue
 
@@ -194,3 +209,20 @@ class SmsMonitor:
         """
         for _ in range(nLines):
             print("\033[F", end="")
+
+    # -----
+    # _move_cursor_down
+    # -----
+    def _move_cursor_down(self, nLines: int) -> None:
+        """
+        Shifts below the progress display by using the ascii code
+        to move the cursor down the desired number of lines.
+
+        Parameters
+        ----------
+        nLines : int
+            The number of lines by which to move down the cursor.
+        """
+        for _ in range(nLines):
+            print("\033[B", end="")
+        print("\033[K", end="")

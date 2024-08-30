@@ -1,5 +1,6 @@
 import math
 import multiprocessing as mp
+import queue
 import random
 import time
 from typing import Dict
@@ -42,14 +43,14 @@ class SmsSender(mp.Process):
         self,
         timeToSend: float,
         sendFailureRate: float,
-        msgQueue: mp.Queue,
-        responseQueue: mp.Queue,
+        msgQueue: queue.Queue,
+        responseQueue: queue.Queue,
         procName: str,
     ) -> None:
         self._timeToSend: float = timeToSend
         self._sendFailureRate: float = sendFailureRate
-        self._msgQueue: mp.Queue = msgQueue
-        self._responseQueue: mp.Queue = responseQueue
+        self._msgQueue: queue.Queue = msgQueue
+        self._responseQueue: queue.Queue = responseQueue
 
         super().__init__(
             target=self._send_sms,
@@ -80,7 +81,10 @@ class SmsSender(mp.Process):
             about the sending into this queue to be aggregated by the monitor.
         """
         while True:
-            sms: Dict[str, str] = msgQueue.get()
+            try:
+                sms: Dict[str, str] = msgQueue.get_nowait()
+            except queue.Empty:
+                continue
 
             if sms == SENTINEL:
                 break

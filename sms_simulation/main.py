@@ -1,7 +1,6 @@
 import argparse
 import multiprocessing as mp
 
-from sms_simulation.constants import TIMEOUT_BUFFER
 from sms_simulation.args import parse_args
 from sms_simulation.monitor import SmsMonitor
 
@@ -26,5 +25,5 @@ def main() -> int:
     args: argparse.Namespace = parse_args()
     monitor: SmsMonitor = SmsMonitor(args)
 
-    timeout: float = args.nMessages * max(args.timeToSend) + TIMEOUT_BUFFER
+    timeout: float = args.nMessages
     return monitor.run(timeout)

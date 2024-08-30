@@ -1,4 +1,5 @@
 import multiprocessing as mp
+import queue
 import random
 import string
 from typing import Dict
@@ -24,9 +25,9 @@ class SmsProducer(mp.Process):
     # -----
     # constructor
     # -----
-    def __init__(self, nMessages: int, msgQueue: mp.Queue, procName: str) -> None:
+    def __init__(self, nMessages: int, msgQueue: queue.Queue, procName: str) -> None:
         self._nMessages: int = nMessages
-        self._msgQueue: mp.Queue = msgQueue
+        self._msgQueue: queue.Queue = msgQueue
 
         self._maxMsgLen: int = 100
 
