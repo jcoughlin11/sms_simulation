@@ -103,3 +103,5 @@ be able to run
 ```bash
 poetry run pytest
 ```
+
+The tests should take less than 1 minute to run.
